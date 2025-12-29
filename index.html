@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur d'Infractions - Astro City RP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(20, 30, 50, 0.95);
+            border-radius: 15px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #4a90e2;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .infractions-section {
+            background: rgba(20, 30, 50, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .category {
+            margin-bottom: 25px;
+        }
+
+        .category-title {
+            font-size: 1.5em;
+            color: #4a90e2;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        .infraction-item {
+            background: rgba(40, 50, 70, 0.6);
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .infraction-item:hover {
+            background: rgba(74, 144, 226, 0.3);
+            transform: translateX(5px);
+        }
+
+        .infraction-item.selected {
+            background: rgba(74, 144, 226, 0.5);
+            border-left: 4px solid #4a90e2;
+        }
+
+        .infraction-name {
+            flex: 1;
+        }
+
+        .infraction-penalty {
+            font-weight: 600;
+            color: #ffc107;
+            margin-left: 15px;
+        }
+
+        .summary-section {
+            background: rgba(20, 30, 50, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .summary-title {
+            font-size: 1.8em;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .selected-infractions {
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .selected-item {
+            background: rgba(40, 50, 70, 0.8);
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-btn {
+            background: #d32f2f;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .remove-btn:hover {
+            background: #f44336;
+        }
+
+        .totals {
+            background: rgba(74, 144, 226, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 1.2em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .total-line:last-child {
+            border-bottom: none;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #ffc107;
+            margin-top: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #f44336;
+        }
+
+        .btn-copy {
+            background: #388e3c;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #4caf50;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(40, 50, 70, 0.8);
+            border: 2px solid #4a90e2;
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-section {
+                position: relative;
+                top: 0;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(40, 50, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a90e2;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚔 Calculateur d'Infractions</h1>
+            <p>Astro City RP - SASP</p>
+        </header>
+
+        <div class="main-content">
+            <div class="infractions-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Rechercher une infraction...">
+                </div>
+
+                <div class="category">
+                    <h2 class="category-title">🚗 Code de la Route</h2>
+                    <div id="codeRoute"></div>
+                </div>
+
+                <div class="category">
+                    <h2 class="category-title">⚠️ Infractions Délictuelles</h2>
+                    <div id="delits"></div>
+                </div>
+
+                <div class="category">
+                    <h2 class="category-title">🔴 Infractions Criminelles</h2>
+                    <div id="criminelles"></div>
+                </div>
+
+                <div class="category">
+                    <h2 class="category-title">💵 Billets Marqués</h2>
+                    <div id="billets"></div>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h2 class="summary-title">📋 Résumé</h2>
+                
+                <div class="selected-infractions" id="selectedList">
+                    <p style="text-align: center; color: #8ab4f8;">Aucune infraction sélectionnée</p>
+                </div>
+
+                <div class="totals">
+                    <div class="total-line">
+                        <span>Amende totale:</span>
+                        <span id="totalAmende">0$</span>
+                    </div>
+                    <div class="total-line">
+                        <span>GAV totale:</span>
+                        <span id="totalGAV">0 mins</span>
+                    </div>
+                    <div class="total-line">
+                        <span>Pénitencier:</span>
+                        <span id="totalPenit">0 mins</span>
+                    </div>
+                    <div class="total-line">
+                        <span>TOTAL:</span>
+                        <span id="grandTotal">0$ + 0 mins</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-clear" onclick="clearAll()">🗑️ Effacer</button>
+                    <button class="btn btn-copy" onclick="copyToClipboard()">📋 Copier</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copié dans le presse-papier !</div>
+
+    <script>
+        const infractions = {
+            codeRoute: [
+                { nom: "Refus d'obtempérer", amende: 1500, gav: 0, penit: 0, note: "Véhicule en fourrière" },
+                { nom: "Vitesse excessive (5 à 15 km/h)", amende: 90, gav: 0, penit: 0 },
+                { nom: "+15 km/h de la vitesse autorisée", amende: 135, gav: 0, penit: 0 },
+                { nom: "+30 km/h de la vitesse autorisée", amende: 300, gav: 0, penit: 0, note: "Retrait de permis" },
+                { nom: "Conduite sans permis", amende: 1500, gav: 0, penit: 0, note: "Individu à pied + fourrière" },
+                { nom: "Usage abusif du klaxon", amende: 30, gav: 0, penit: 0 },
+                { nom: "Défaut d'assurance ou contrôle technique", amende: 500, gav: 0, penit: 0 },
+                { nom: "Véhicule non en état", amende: 100, gav: 0, penit: 0 },
+                { nom: "Circulation à contre-sens", amende: 250, gav: 0, penit: 0 },
+                { nom: "Stop non respecté", amende: 150, gav: 0, penit: 0 },
+                { nom: "Stationnement gênant ou interdit", amende: 150, gav: 0, penit: 0 }
+            ],
+            delits: [
+                { nom: "Arme non létale sortie en lieu public", amende: 600, gav: 0, penit: 0 },
+                { nom: "Tentative de vol de véhicule", amende: 1000, gav: 0, penit: 0 },
+                { nom: "Vol de véhicule", amende: 2000, gav: 10, penit: 0 },
+                { nom: "Arme létale sortie en lieu public", amende: 1500, gav: 10, penit: 0, note: "Saisie de l'arme" },
+                { nom: "Port d'arme non autorisé", amende: 3000, gav: 10, penit: 0, note: "Saisie de l'arme" },
+                { nom: "Braquage sur civil", amende: 1000, gav: 5, penit: 0 },
+                { nom: "Possession de drogue", amende: 750, gav: 0, penit: 0, note: "Saisie + GAV selon quantité" },
+                { nom: "Vente de drogue", amende: 2000, gav: 10, penit: 0, note: "Saisie de la drogue" },
+                { nom: "Braquage supérette", amende: 5000, gav: 10, penit: 0 },
+                { nom: "Braquage de banque", amende: 10000, gav: 15, penit: 30 },
+                { nom: "Prise d'otage sur agent de l'État", amende: 6000, gav: 15, penit: 20 },
+                { nom: "Prise d'otage de civil", amende: 3000, gav: 15, penit: 0 },
+                { nom: "Détention d'objet illégal", amende: 50, gav: 0, penit: 0, note: "50$/objet" },
+                { nom: "Dégradation de biens publics", amende: 250, gav: 0, penit: 0 },
+                { nom: "Trouble à l'ordre public", amende: 150, gav: 0, penit: 0 },
+                { nom: "Manifestation illégale", amende: 250, gav: 0, penit: 0 },
+                { nom: "Menace/intimidation envers un civil", amende: 600, gav: 0, penit: 0 },
+                { nom: "Entrave à une opération de police", amende: 700, gav: 0, penit: 0 },
+                { nom: "Insulte envers un agent de l'État", amende: 500, gav: 5, penit: 0 },
+                { nom: "Menace/intimidation envers agent", amende: 600, gav: 5, penit: 0 },
+                { nom: "Délit de fuite", amende: 2000, gav: 10, penit: 0 },
+                { nom: "Tentative de corruption", amende: 1500, gav: 10, penit: 0 }
+            ],
+            criminelles: [
+                { nom: "Tir en direction d'un civil", amende: 3000, gav: 10, penit: 0 },
+                { nom: "Agression sur agent", amende: 4000, gav: 10, penit: 0 },
+                { nom: "Homicide involontaire", amende: 5000, gav: 15, penit: 45 },
+                { nom: "Tir en direction d'un agent de l'État", amende: 6000, gav: 20, penit: 0 },
+                { nom: "Tentative de meurtre sur civil", amende: 25000, gav: 30, penit: 15 },
+                { nom: "Tentative de meurtre sur agent", amende: 30000, gav: 30, penit: 20 },
+                { nom: "Meurtre sur civil", amende: 50000, gav: 30, penit: 30 },
+                { nom: "Meurtre sur agent de l'État", amende: 75000, gav: 30, penit: 60 }
+            ],
+            billets: [
+                { nom: "10'000$ à 50'000$", amende: 0, gav: 10, penit: 0, note: "20% de la somme + Saisie", percentAmende: 20 },
+                { nom: "50'000$ à 100'000$", amende: 0, gav: 15, penit: 0, note: "20% de la somme + Saisie", percentAmende: 20 },
+                { nom: "> 100'000$", amende: 0, gav: 15, penit: 0, note: "20% de la somme + Saisie", percentAmende: 20 }
+            ]
+        };
+
+        let selectedInfractions = [];
+
+        function renderInfractions() {
+            ['codeRoute', 'delits', 'criminelles', 'billets'].forEach(category => {
+                const container = document.getElementById(category);
+                container.innerHTML = '';
+                
+                infractions[category].forEach((infraction, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'infraction-item';
+                    div.onclick = () => toggleInfraction(category, index);
+                    
+                    let penalty = '';
+                    if (infraction.amende > 0) penalty += `${infraction.amende}$`;
+                    if (infraction.gav > 0) penalty += ` + ${infraction.gav} mins`;
+                    if (infraction.penit > 0) penalty += ` (Pénit: ${infraction.penit} mins)`;
+                    if (infraction.percentAmende) penalty = infraction.note;
+                    
+                    div.innerHTML = `
+                        <div class="infraction-name">${infraction.nom}</div>
+                        <div class="infraction-penalty">${penalty}</div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function toggleInfraction(category, index) {
+            const infraction = infractions[category][index];
+            const key = `${category}-${index}`;
+            
+            const existingIndex = selectedInfractions.findIndex(item => item.key === key);
+            
+            if (existingIndex > -1) {
+                selectedInfractions.splice(existingIndex, 1);
+            } else {
+                selectedInfractions.push({
+                    key: key,
+                    ...infraction
+                });
+            }
+            
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const selectedList = document.getElementById('selectedList');
+            
+            if (selectedInfractions.length === 0) {
+                selectedList.innerHTML = '<p style="text-align: center; color: #8ab4f8;">Aucune infraction sélectionnée</p>';
+            } else {
+                selectedList.innerHTML = selectedInfractions.map((inf, idx) => `
+                    <div class="selected-item">
+                        <div style="flex: 1;">
+                            <div>${inf.nom}</div>
+                            <small style="color: #8ab4f8;">${inf.amende}$ ${inf.gav > 0 ? '+ ' + inf.gav + ' mins' : ''}</small>
+                        </div>
+                        <button class="remove-btn" onclick="removeInfraction(${idx})">✕</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Calcul des totaux
+            let totalAmende = 0;
+            let totalGAV = 0;
+            let totalPenit = 0;
+            
+            selectedInfractions.forEach(inf => {
+                totalAmende += inf.amende;
+                totalGAV += inf.gav;
+                totalPenit += inf.penit;
+            });
+            
+            // Limite de 3 infractions max pour GAV
+            if (selectedInfractions.length > 3) {
+                const topThree = selectedInfractions
+                    .sort((a, b) => (b.gav + b.penit) - (a.gav + a.penit))
+                    .slice(0, 3);
+                
+                totalGAV = 0;
+                totalPenit = 0;
+                topThree.forEach(inf => {
+                    totalGAV += inf.gav;
+                    totalPenit += inf.penit;
+                });
+            }
+            
+            document.getElementById('totalAmende').textContent = totalAmende + '$';
+            document.getElementById('totalGAV').textContent = totalGAV + ' mins';
+            document.getElementById('totalPenit').textContent = totalPenit + ' mins';
+            document.getElementById('grandTotal').textContent = `${totalAmende}$ + ${totalGAV + totalPenit} mins`;
+            
+            // Mise à jour de l'affichage visuel
+            document.querySelectorAll('.infraction-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            selectedInfractions.forEach(inf => {
+                const [category, index] = inf.key.split('-');
+                const items = document.querySelectorAll(`#${category} .infraction-item`);
+                if (items[index]) {
+                    items[index].classList.add('selected');
+                }
+            });
+        }
+
+        function removeInfraction(index) {
+            selectedInfractions.splice(index, 1);
+            updateDisplay();
+        }
+
+        function clearAll() {
+            selectedInfractions = [];
+            updateDisplay();
+        }
+
+        function copyToClipboard() {
+            if (selectedInfractions.length === 0) return;
+            
+            let text = '═══════════════════════════\n';
+            text += '🚔 RAPPORT D\'INFRACTIONS - ASTRO CITY RP\n';
+            text += '═══════════════════════════\n\n';
+            
+            selectedInfractions.forEach((inf, idx) => {
+                text += `${idx + 1}. ${inf.nom}\n`;
+                text += `   💰 ${inf.amende}$`;
+                if (inf.gav > 0) text += ` | ⏱️ GAV: ${inf.gav} mins`;
+                if (inf.penit > 0) text += ` | 🔒 Pénitencier: ${inf.penit} mins`;
+                if (inf.note) text += `\n   📝 ${inf.note}`;
+                text += '\n\n';
+            });
+            
+            const totals = document.getElementById('grandTotal').textContent;
+            text += '═══════════════════════════\n';
+            text += `📊 TOTAL: ${totals}\n`;
+            text += '═══════════════════════════';
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        // Recherche
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const search = e.target.value.toLowerCase();
+            document.querySelectorAll('.infraction-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        });
+
+        // Initialisation
+        renderInfractions();
+    </script>
+</body>
+</html>
